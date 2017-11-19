@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+CUR="$(xkblayout-state print '%s')"
+ALL="$(setxkbmap -query | awk ' BEGIN{layout="";variant=""} /^layout/{layout=$2} /^variant/{variant=" ("$2")"} END{printf("%s%s",layout,variant)}')" 
+OUT=`echo $ALL | sed -e 's/,/\//' -re "s/($CUR)/<span color='white' font_weight='bold'>\\1<\\/span>/"`
+
+echo "<span color='grey'>$OUT</span>"
+
+
+#xkblayout-state print "<span font_weight='bold'>%s</span>"
