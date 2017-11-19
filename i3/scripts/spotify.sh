@@ -1,4 +1,46 @@
-#!/bin/bash
+#!/usr/bin/env php
+<?php
 
-echo `dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player' string:'Metadata'|egrep -A 2 "artist"|egrep -v "artist"|egrep -v "array"|cut -b 27-|cut -d '"' -f 1|egrep -v ^$` "-" `dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.Get string:'org.mpris.MediaPlayer2.Player' string:'Metadata'|egrep -A 1 "title"|egrep -v "title"|cut -b 44-|cut -d '"' -f 1|egrep -v ^$`
+function offline() {
+    exit;
+}
+
+exec("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.freedesktop.DBus.Properties.GetAll string:'org.mpris.MediaPlayer2.Player' 2> /dev/null", $output, $stderr);
+
+if(count($output) < 10) {
+    offline();
+}
+
+$output = implode("", $output);
+
+preg_match('/string\s+"xesam:artist"\s+variant\s+array\s+\[\s+string "([^"]+)"/', $output, $matches);
+$x = [];
+$artist = isset($matches[1]) ? $matches[1] : offline();
+
+preg_match('/string "xesam:title"\s+variant\s+string "([^"]+)"/', $output, $matches);
+
+$title = isset($matches[1]) ? $matches[1] : offline();
+
+preg_match('/string "PlaybackStatus"         variant             string "([^"]+)"/', $output, $matches);
+
+$playing = isset($matches[1]) ? $matches[1] : offline();
+$playing = $playing == 'Playing';
+
+if($playing) {
+    echo "$artist - $title";
+} else {
+    $str = "$artist - $title";
+
+    $first = substr($str, 0, round(strlen($str)/2));
+    $second = substr($str, round(strlen($str)/2));
+
+    function spice($in) {
+        return "<span foreground='grey'>$in</span>";
+    }
+
+    $first = substr($first, 0, -2);
+    $second = substr($second, 2);
+    
+    echo spice($first) . " [] " . spice($second);
+}
 
